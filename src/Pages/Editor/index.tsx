@@ -18,7 +18,7 @@ function Editor() {
     isConnected,
   } = useContext(EditorContext);
   useEffect(() => {
-    let connectedKey = null;
+    let connectedKey: NodeJS.Timeout | null = null;
     if (isConnected && deviceIp) {
       connectedKey = setInterval(async () => {
         const response = await TestDeviceConnection(deviceIp);
