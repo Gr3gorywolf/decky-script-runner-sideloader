@@ -1,19 +1,16 @@
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
-import Navbar from './Components/Navbar';
-import Contact from './Pages/Contact';
-import About from './Pages/About';
-import Home from './Pages/Home';
+import Editor from './Pages/Editor';
+import { EditorContextProvider } from './Contexts/EditorContext';
+import { QueryClient, QueryClientProvider } from 'react-query';
+
+export const queryClient = new QueryClient();
 
 const App: React.FC = () => {
   return (
-    <BrowserRouter>
-      <Navbar />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/contact" element={<Contact />} />
-      </Routes>
-    </BrowserRouter>
+    <QueryClientProvider client={queryClient}>
+      <EditorContextProvider>
+        <Editor />
+      </EditorContextProvider>
+    </QueryClientProvider>
   );
 };
 

@@ -12,7 +12,6 @@ module.exports = {
     'plugin:@typescript-eslint/recommended',
     'plugin:react/recommended',
     'plugin:react-hooks/recommended',
-    'plugin:jsx-a11y/strict',
     'plugin:import/recommended',
     'plugin:import/typescript',
     'plugin:prettier/recommended',
