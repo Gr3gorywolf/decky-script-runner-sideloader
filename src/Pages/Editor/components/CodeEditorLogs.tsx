@@ -47,7 +47,11 @@ export const CodeEditorLogs: FC<props> = ({ onClose, script }) => {
   }, []);
   return (
     <Sheet onOpenChange={() => onClose()} open={true}>
-      <SheetContent className="dark text-white">
+      <SheetContent className="dark text-white" style={{ 
+        width: '50%',
+        minWidth: '400px',
+        maxWidth: '800px',
+       }}>
         <SheetHeader>
           <SheetTitle>Script logs</SheetTitle>
         </SheetHeader>

@@ -31,6 +31,7 @@ export const FileEditDialog: FC<props> = ({
     try {
       await putUpdateScript(editingFile);
       queryClient.refetchQueries('scripts-fetch');
+      onClose();
     } catch (err:any) {
       toast({
         title: 'Failed to edit the script',
