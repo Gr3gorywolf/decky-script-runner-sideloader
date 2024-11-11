@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { EditorContext } from '@/Contexts/EditorContext';
 import { getScriptContent, putUpdateScript } from '@/Api/endpoints/scriptsApi';
-import { Editor, useMonaco } from '@monaco-editor/react';
+import { Editor } from '@monaco-editor/react';
 import { getMonacoLanguage } from '@/Utils/monaco';
 import {
   MenubarShortcut,
@@ -10,20 +10,16 @@ import {
   MenubarTrigger,
   MenubarContent,
   MenubarItem,
-  MenubarSeparator,
-  MenubarSub,
-  MenubarSubTrigger,
-  MenubarSubContent,
 } from '@/Components/ui/menubar';
 import { CodeEditorLogs } from './CodeEditorLogs';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/Hooks/use-toast';
 
 export const CodeEditor = () => {
   const { editingFile } = useContext(EditorContext);
   const [content, setContent] = useState('');
-  const [isSaving, setIsSaving] = useState(false);
+  const [_, setIsSaving] = useState(false);
   const [logsOpen, setLogsOpen] = useState(false);
-  const {toast } = useToast();
+  const { toast } = useToast();
   const editor = useRef<any>();
 
   const fetchScriptContent = async () => {
@@ -45,7 +41,7 @@ export const CodeEditor = () => {
         title: 'File saved',
         duration: 2000,
       });
-    } catch (err) {
+    } catch (err: any) {
       toast({
         title: 'Failed to save file',
         description: err?.response?.data?.error,
@@ -67,7 +63,7 @@ export const CodeEditor = () => {
   }, [editingFile]);
 
   useEffect(() => {
-    const handleKeyDown = event => {
+    const handleKeyDown = (event: any) => {
       if (event.ctrlKey && event.key === 's') {
         event.preventDefault();
         handleSave();

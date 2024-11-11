@@ -6,12 +6,12 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from '@/Components/ui/dialog';
 import { FC, useState } from 'react';
 import { ScriptData } from '@/Types/ScriptData';
-import { postDeleteScript, putUpdateScript } from '@/Api/endpoints/scriptsApi';
+import {  putUpdateScript } from '@/Api/endpoints/scriptsApi';
 import { queryClient } from '@/App';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/Hooks/use-toast';
 interface props {
   selectedScript: ScriptData;
   onClose: () => void;
@@ -31,7 +31,7 @@ export const FileEditDialog: FC<props> = ({
     try {
       await putUpdateScript(editingFile);
       queryClient.refetchQueries('scripts-fetch');
-    } catch (err) {
+    } catch (err:any) {
       toast({
         title: 'Failed to edit the script',
         description: err?.response?.data?.error,

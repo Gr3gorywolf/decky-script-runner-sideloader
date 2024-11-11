@@ -1,5 +1,5 @@
 /* eslint-disable indent */
-import { Button } from '@/components/ui/button';
+import { Button } from '@/Components/ui/button';
 import {
   Upload,
   FileIcon,
@@ -9,19 +9,6 @@ import {
   Terminal,
   MoreVertical,
   Plus,
-  Cloud,
-  CreditCard,
-  Github,
-  Keyboard,
-  LifeBuoy,
-  LogOut,
-  Mail,
-  MessageSquare,
-  PlusCircle,
-  Settings,
-  User,
-  UserPlus,
-  Users,
   Pencil,
   Delete,
 } from 'lucide-react';
@@ -43,15 +30,9 @@ import {
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuPortal,
-  DropdownMenuSeparator,
-  DropdownMenuShortcut,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/Components/ui/dropdown-menu';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/Hooks/use-toast';
 
 export const FileList = () => {
   const { isConnected, editingFile, setEditingFile } =
@@ -104,7 +85,7 @@ export const FileList = () => {
         setEditingFile(foundScript);
       }
       queryClient.refetchQueries(SCRIPTS_QUERY_KEY);
-    } catch (err) {
+    } catch (err:any) {
       toast({
         title: 'Failed to upload the script',
         description: err?.response?.data?.error,
@@ -139,7 +120,7 @@ export const FileList = () => {
         setEditingFile(newScript);
       }
       queryClient.refetchQueries(SCRIPTS_QUERY_KEY);
-    } catch (err) {
+    } catch (err:any) {
       console.log(err);
       toast({
         title: 'Failed to create the script',
@@ -160,7 +141,7 @@ export const FileList = () => {
         setEditingFile(null);
       }
       queryClient.refetchQueries(SCRIPTS_QUERY_KEY);
-    } catch (err) {
+    } catch (err:any) {
       toast({
         title: 'Failed to delete the script',
         description: err?.response?.data?.error,

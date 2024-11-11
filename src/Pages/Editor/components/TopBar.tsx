@@ -1,10 +1,10 @@
 import { Wifi, WifiOff } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/Components/ui/button';
 import { LAST_IP_KEY } from '@/Utils/constants';
 import { useContext, useState } from 'react';
 import { TestDeviceConnection } from '@/Utils/helpers';
 import { EditorContext } from '@/Contexts/EditorContext';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/Hooks/use-toast';
 
 export const TopBar = () => {
   const { isConnected, setDeviceIp, setIsConnected, setEditingFile, setFiles } =

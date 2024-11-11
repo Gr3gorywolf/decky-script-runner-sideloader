@@ -1,13 +1,9 @@
 import { getScriptLogs } from '@/Api/endpoints/scriptsApi';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/Components/ui/input';
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
-  SheetFooter,
-  SheetClose,
 } from '@/Components/ui/sheet';
 import { ScriptData } from '@/Types/ScriptData';
 import { FC, useEffect, useRef, useState } from 'react';
