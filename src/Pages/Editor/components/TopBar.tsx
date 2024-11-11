@@ -4,11 +4,13 @@ import { LAST_IP_KEY } from '@/Utils/constants';
 import { useContext, useState } from 'react';
 import { TestDeviceConnection } from '@/Utils/helpers';
 import { EditorContext } from '@/Contexts/EditorContext';
+import { useToast } from '@/hooks/use-toast';
 
 export const TopBar = () => {
   const { isConnected, setDeviceIp, setIsConnected, setEditingFile, setFiles } =
     useContext(EditorContext);
   const [connecting, setConnecting] = useState(false);
+  const { toast } = useToast();
   const handleConnect = async () => {
     const result = prompt(
       "Enter your deck's IP address",
@@ -24,6 +26,13 @@ export const TopBar = () => {
         // @ts-ignore
         window.STEAM_DECK_IP = result;
         localStorage.setItem(LAST_IP_KEY, result);
+      } else {
+        toast({
+          title: 'Failed to connect',
+          description: 'Address not reachable',
+          duration: 2000,
+          variant: 'destructive',
+        });
       }
       setConnecting(false);
     }
@@ -43,7 +52,7 @@ export const TopBar = () => {
   };
 
   return (
-    <div className="bg-gray-800 p-2 flex items-center justify-between">
+    <div className="bg-gray-900 p-2 flex items-center justify-between">
       <div className="flex items-center">
         {isConnected ? (
           <Wifi className="h-5 w-5 text-green-500 mr-2" />

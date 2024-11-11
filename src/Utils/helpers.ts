@@ -2,11 +2,21 @@ import axios from 'axios';
 
 export const TestDeviceConnection = async (ip: string) => {
   try {
-    await axios.options(`http://${ip}:9696/`);
+    await axios.get(`http://${ip}:9696/status`);
     return true;
   } catch (error) {
     return false;
   }
+};
+
+export const humanizeFileName = (fileName: string) => {
+  const nameWithoutExtension = fileName.replace(/\.[^/.]+$/, '');
+  const withSpaces = nameWithoutExtension.replace(/[_-]/g, ' ');
+  const spacedCamelCase = withSpaces.replace(/([a-z])([A-Z])/g, '$1 $2');
+  const humanized = spacedCamelCase.replace(/\b\w/g, char =>
+    char.toUpperCase()
+  );
+  return humanized;
 };
 
 export const readFile = (): Promise<{ content: string; name: string }> => {

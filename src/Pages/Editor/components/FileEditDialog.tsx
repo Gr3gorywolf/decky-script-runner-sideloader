@@ -1,7 +1,6 @@
 import { Button } from '@/Components/ui/button';
-import { Input } from '@/Components/ui/input';
 import { Textarea } from '@/Components/ui/textarea';
-import { Label } from '@radix-ui/react-label';
+import { Label } from '@/Components/ui/label';
 import {
   Dialog,
   DialogContent,
@@ -12,6 +11,7 @@ import { FC, useState } from 'react';
 import { ScriptData } from '@/Types/ScriptData';
 import { postDeleteScript, putUpdateScript } from '@/Api/endpoints/scriptsApi';
 import { queryClient } from '@/App';
+import { useToast } from '@/hooks/use-toast';
 interface props {
   selectedScript: ScriptData;
   onClose: () => void;
@@ -25,39 +25,27 @@ export const FileEditDialog: FC<props> = ({
 }) => {
   const [editingFile, setEditingFile] = useState<ScriptData>(selectedScript);
   const [isSaving, setIsSaving] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const { toast } = useToast();
   const handleSaveEdit = async () => {
     setIsSaving(true);
     try {
       await putUpdateScript(editingFile);
       queryClient.refetchQueries('scripts-fetch');
     } catch (err) {
-      console.log(err.response);
-      onClose();
-    } finally {
-      setIsSaving(false);
-      onClose();
+      toast({
+        title: 'Failed to edit the script',
+        description: err?.response?.data?.error,
+        duration: 2000,
+        variant: 'destructive',
+      });
+      console.log(err.response); 
     }
-  };
-
-  const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this script?')) return;
-    setIsDeleting(true);
-    try {
-      await postDeleteScript(editingFile.name);
-      queryClient.refetchQueries('scripts-fetch');
-    } catch (err) {
-      console.log(err.response);
-      onClose();
-    } finally {
-      setIsDeleting(false);
-      onClose();
-    }
+    setIsSaving(false);
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={() => onClose()}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] dark text-white">
         <DialogHeader>
           <DialogTitle>Edit File Details</DialogTitle>
         </DialogHeader>
@@ -81,15 +69,8 @@ export const FileEditDialog: FC<props> = ({
         </div>
         <div className="flex flex-row gap-3">
           <Button
-            className="bg-red-600 hover:bg-red-500 w-1/2"
-            disabled={isSaving || isDeleting}
-            onClick={handleDelete}
-          >
-            {isDeleting ? 'Deleting...' : 'Delete script'}
-          </Button>
-          <Button
-            className="w-1/2"
-            disabled={isSaving || isDeleting}
+            className="w-full"
+            disabled={isSaving}
             onClick={handleSaveEdit}
           >
             {isSaving ? 'Saving...' : 'Save changes'}

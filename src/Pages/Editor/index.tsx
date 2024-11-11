@@ -4,6 +4,8 @@ import { FileList } from './components/FileList';
 import { useContext, useEffect } from 'react';
 import { EditorContext } from '@/Contexts/EditorContext';
 import { TestDeviceConnection } from '@/Utils/helpers';
+import { NoFilePlaceholder } from './components/NoFilePlaceholder';
+import { NotConnectedPlaceholder } from './components/NotConnectedPlaceholder';
 
 function Editor() {
   const {
@@ -12,6 +14,7 @@ function Editor() {
     setEditingFile,
     setFiles,
     setDeviceIp,
+    editingFile,
     isConnected,
   } = useContext(EditorContext);
   useEffect(() => {
@@ -25,7 +28,7 @@ function Editor() {
           setFiles([]);
           setDeviceIp(undefined);
         }
-      }, 2000);
+      }, 10000);
     }
 
     return () => {
@@ -35,18 +38,20 @@ function Editor() {
     };
   }, [deviceIp, isConnected]);
   return (
-    <div className="flex flex-col h-screen bg-gray-900 text-gray-300 font-mono">
+    <div className="dark flex flex-col h-screen bg-gray-900 text-gray-300 font-mono">
       {/* Top bar */}
       <TopBar />
 
-      {isConnected && (
+      {isConnected ? (
         <div className="flex flex-1 overflow-hidden">
           {/* File list sidebar */}
           <FileList />
 
           {/* Code editor */}
-          <CodeEditor />
+          {editingFile ? <CodeEditor /> : <NoFilePlaceholder />}
         </div>
+      ) : (
+        <NotConnectedPlaceholder />
       )}
     </div>
   );

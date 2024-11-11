@@ -1,13 +1,30 @@
-import { useContext, useEffect, useState, useCallback } from 'react';
+import { useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { EditorContext } from '@/Contexts/EditorContext';
 import { getScriptContent, putUpdateScript } from '@/Api/endpoints/scriptsApi';
-import { Editor } from '@monaco-editor/react';
+import { Editor, useMonaco } from '@monaco-editor/react';
 import { getMonacoLanguage } from '@/Utils/monaco';
+import {
+  MenubarShortcut,
+  Menubar,
+  MenubarMenu,
+  MenubarTrigger,
+  MenubarContent,
+  MenubarItem,
+  MenubarSeparator,
+  MenubarSub,
+  MenubarSubTrigger,
+  MenubarSubContent,
+} from '@/Components/ui/menubar';
+import { CodeEditorLogs } from './CodeEditorLogs';
+import { useToast } from '@/hooks/use-toast';
 
 export const CodeEditor = () => {
   const { editingFile } = useContext(EditorContext);
   const [content, setContent] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [logsOpen, setLogsOpen] = useState(false);
+  const {toast } = useToast();
+  const editor = useRef<any>();
 
   const fetchScriptContent = async () => {
     if (!editingFile) return;
@@ -24,11 +41,24 @@ export const CodeEditor = () => {
     setIsSaving(true);
     try {
       await putUpdateScript({ ...editingFile, content });
+      toast({
+        title: 'File saved',
+        duration: 2000,
+      });
     } catch (err) {
-      console.log(err.response);
+      toast({
+        title: 'Failed to save file',
+        description: err?.response?.data?.error,
+        duration: 2000,
+        variant: 'destructive',
+      });
     }
     setIsSaving(false);
   }, [editingFile, content]);
+
+  const handleOpenLogs = () => {
+    setLogsOpen(true);
+  };
 
   useEffect(() => {
     if (editingFile) {
@@ -42,6 +72,11 @@ export const CodeEditor = () => {
         event.preventDefault();
         handleSave();
       }
+
+      if (event.ctrlKey && event.key === 'l') {
+        event.preventDefault();
+        handleOpenLogs();
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
@@ -49,29 +84,75 @@ export const CodeEditor = () => {
   }, [handleSave]);
 
   return (
-    <div className="flex-grow">
-      <Editor
-        height="100%"
-        defaultLanguage={getMonacoLanguage(editingFile?.language ?? '')}
-        theme="vs-dark"
-        language={getMonacoLanguage(editingFile?.language ?? '')}
-        value={content}
-        onChange={value => setContent(value ?? '')}
-        options={{
-          minimap: { enabled: false },
-          fontSize: 14,
-          lineNumbers: 'on',
-          roundedSelection: false,
-          scrollBeyondLastLine: false,
-          readOnly: false,
-          cursorStyle: 'line',
-        }}
-      />
-      {!editingFile && (
-        <div className="absolute inset-0 flex items-center justify-center text-gray-500 pointer-events-none">
-          Select a file to start editing
-        </div>
+    <>
+      <div className="flex-grow">
+        <Menubar className="w-full bg-gray-800 rounded-none dark">
+          <MenubarMenu>
+            <MenubarTrigger>File</MenubarTrigger>
+            <MenubarContent className="dark">
+              <MenubarItem onClick={handleSave}>
+                Save <MenubarShortcut>⌘S</MenubarShortcut>
+              </MenubarItem>
+            </MenubarContent>
+          </MenubarMenu>
+          <MenubarMenu>
+            <MenubarTrigger>Edit</MenubarTrigger>
+            <MenubarContent className="dark">
+              <MenubarItem
+                onClick={() => {
+                  editor?.current.trigger('keyboard', 'undo', null);
+                }}
+              >
+                Undo <MenubarShortcut>⌘Z</MenubarShortcut>
+              </MenubarItem>
+              <MenubarItem
+                onClick={() => {
+                  editor?.current.trigger('keyboard', 'redo', null);
+                }}
+              >
+                Redo <MenubarShortcut>⌘Y</MenubarShortcut>
+              </MenubarItem>
+            </MenubarContent>
+          </MenubarMenu>
+          <MenubarMenu>
+            <MenubarTrigger>Debug</MenubarTrigger>
+            <MenubarContent className="dark">
+              <MenubarItem onClick={handleOpenLogs}>
+                Open logs <MenubarShortcut>⌘L</MenubarShortcut>
+              </MenubarItem>
+            </MenubarContent>
+          </MenubarMenu>
+        </Menubar>
+        <Editor
+          height="calc(100% - 40px)"
+          onMount={edi => {
+            editor.current = edi;
+          }}
+          defaultLanguage={getMonacoLanguage(editingFile?.language ?? '')}
+          theme="vs-dark"
+          language={getMonacoLanguage(editingFile?.language ?? '')}
+          value={content}
+          onChange={value => setContent(value ?? '')}
+          options={{
+            minimap: { enabled: false },
+            fontSize: 14,
+            lineNumbers: 'on',
+            roundedSelection: false,
+            formatOnPaste: true,
+            scrollBeyondLastLine: false,
+            readOnly: false,
+            cursorStyle: 'line',
+          }}
+        />
+      </div>
+      {editingFile && logsOpen && (
+        <CodeEditorLogs
+          script={editingFile}
+          onClose={() => {
+            setLogsOpen(false);
+          }}
+        />
       )}
-    </div>
+    </>
   );
 };

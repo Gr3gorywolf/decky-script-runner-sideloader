@@ -8,15 +8,50 @@ import {
   FileText,
   Terminal,
   MoreVertical,
+  Plus,
+  Cloud,
+  CreditCard,
+  Github,
+  Keyboard,
+  LifeBuoy,
+  LogOut,
+  Mail,
+  MessageSquare,
+  PlusCircle,
+  Settings,
+  User,
+  UserPlus,
+  Users,
+  Pencil,
+  Delete,
 } from 'lucide-react';
 import { FileEditDialog } from './FileEditDialog';
 import { SCRIPTS_QUERY_KEY, useGetScripts } from '@/Hooks/useGetScripts';
 import { useContext, useState } from 'react';
 import { EditorContext } from '@/Contexts/EditorContext';
-import { readFile } from '@/Utils/helpers';
-import { postCreateScript, putUpdateScript } from '@/Api/endpoints/scriptsApi';
+import { humanizeFileName, readFile } from '@/Utils/helpers';
+import {
+  postCreateScript,
+  postDeleteScript,
+  putUpdateScript,
+} from '@/Api/endpoints/scriptsApi';
 import { queryClient } from '@/App';
 import { ScriptData } from '@/Types/ScriptData';
+import { PostScriptData } from '@/Types/PostScriptData';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuPortal,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from '@/Components/ui/dropdown-menu';
+import { useToast } from '@/hooks/use-toast';
 
 export const FileList = () => {
   const { isConnected, editingFile, setEditingFile } =
@@ -24,6 +59,8 @@ export const FileList = () => {
   const { data: scripts } = useGetScripts(isConnected);
   const [editingScript, setEditingScript] = useState<ScriptData | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const { toast } = useToast();
   const getFileIcon = (language?: string) => {
     switch (language) {
       case 'js':
@@ -44,9 +81,9 @@ export const FileList = () => {
   };
 
   const handleFileUpload = async () => {
-    setIsSubmitting(true);
     try {
       const { content, name } = await readFile();
+      setIsSubmitting(true);
       const fileExtension = name.slice(name.lastIndexOf('.')).toLowerCase();
       const foundScript = scripts?.find(script => script.name == name);
       if (foundScript) {
@@ -68,23 +105,93 @@ export const FileList = () => {
       }
       queryClient.refetchQueries(SCRIPTS_QUERY_KEY);
     } catch (err) {
+      toast({
+        title: 'Failed to upload the script',
+        description: err?.response?.data?.error,
+        duration: 2000,
+        variant: 'destructive',
+      });
       console.log(err);
     }
 
     setIsSubmitting(false);
   };
 
+  const handleCreateScript = async () => {
+    const name = prompt('Enter the name of the script');
+    if (!name) return;
+    setIsCreating(true);
+    try {
+      const fileExtension = name.slice(name.lastIndexOf('.')).toLowerCase();
+      const foundScript = scripts?.find(script => script.name == name);
+      if (foundScript) {
+        console.error('Script already exists');
+        return;
+      } else {
+        const newScript: PostScriptData = {
+          name,
+          description: '',
+          content: '',
+          author: '',
+          language: fileExtension.slice(1),
+        };
+        await postCreateScript(newScript);
+        setEditingFile(newScript);
+      }
+      queryClient.refetchQueries(SCRIPTS_QUERY_KEY);
+    } catch (err) {
+      console.log(err);
+      toast({
+        title: 'Failed to create the script',
+        description: err?.response?.data?.error,
+        duration: 2000,
+        variant: 'destructive',
+      });
+    }
+
+    setIsCreating(false);
+  };
+
+  const handleDelete = async (script: ScriptData) => {
+    if (!confirm('Are you sure you want to delete this script?')) return;
+    try {
+      await postDeleteScript(script.name);
+      if (script.name === editingFile?.name) {
+        setEditingFile(null);
+      }
+      queryClient.refetchQueries(SCRIPTS_QUERY_KEY);
+    } catch (err) {
+      toast({
+        title: 'Failed to delete the script',
+        description: err?.response?.data?.error,
+        duration: 2000,
+        variant: 'destructive',
+      });
+      console.log(err.response);
+    }
+  };
+
   return (
     <>
-      <div className="w-80 bg-gray-800 p-4 flex flex-col">
+      <div className="w-90 bg-gray-900 p-4 flex flex-col">
         {isConnected && (
-          <Button
-            onClick={handleFileUpload}
-            className="mb-4 bg-blue-600 hover:bg-blue-700 text-white"
-          >
-            <Upload className="mr-2 h-4 w-4" />{' '}
-            {isSubmitting ? 'Uploading...' : 'Upload script'}
-          </Button>
+          <div className="flex flex-row gap-2">
+            <Button
+              onClick={handleFileUpload}
+              className="mb-4 w-1/2 bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              <Upload className="mr-2 h-4 w-4" />{' '}
+              {isSubmitting ? 'Uploading...' : 'Upload'}
+            </Button>
+
+            <Button
+              onClick={handleCreateScript}
+              className="mb-4 w-1/2 bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              <Plus className="mr-2 h-4 w-4" />{' '}
+              {isCreating ? 'Creating...' : 'Create'}
+            </Button>
+          </div>
         )}
         <div className="overflow-y-auto flex-grow">
           {scripts &&
@@ -92,15 +199,15 @@ export const FileList = () => {
             scripts.map((script, index) => (
               <div
                 key={index}
-                className={`flex items-center justify-between p-2 cursor-pointer hover:bg-gray-700 rounded ${
-                  editingFile?.name === script.name ? 'bg-gray-700' : ''
+                className={`flex items-center justify-between p-2 cursor-pointer hover:bg-gray-800 rounded ${
+                  editingFile?.name === script.name ? 'bg-gray-800' : ''
                 }`}
                 onClick={() => setEditingFile(script)}
               >
                 <div className="flex items-center">
                   {getFileIcon(script.language)}
                   <div>
-                    <div>{script.name}</div>
+                    <div>{humanizeFileName(script.name)}</div>
                     {script.description && (
                       <div className="text-xs text-gray-400">
                         {script.description}
@@ -113,17 +220,43 @@ export const FileList = () => {
                     )}
                   </div>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="ml-2"
-                  onClick={e => {
-                    e.stopPropagation();
-                    setEditingScript(script);
-                  }}
-                >
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="ml-2"
+                      onClick={e => {
+                        e.stopPropagation();
+                      }}
+                    >
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="w-24 dark">
+                    <DropdownMenuGroup>
+                      <DropdownMenuItem
+                        onClick={e => {
+                          e.stopPropagation();
+                          setEditingScript(script);
+                        }}
+                      >
+                        <Pencil />
+                        <span>Edit</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={e => {
+                          e.stopPropagation();
+                          handleDelete(script);
+                        }}
+                      >
+                        <Delete />
+                        <span>Delete</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuGroup>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             ))}
         </div>

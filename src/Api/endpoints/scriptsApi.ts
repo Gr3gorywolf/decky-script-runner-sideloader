@@ -12,7 +12,7 @@ export const getScriptContent = async (scriptName: string) => {
 };
 
 export const getScriptLogs = async (scriptName: string) => {
-  return getApi().delete<ScriptData>(`/logs/${scriptName}`);
+  return getApi().get<string>(`/logs/${scriptName}`);
 };
 
 export const postCreateScript = async (scriptData: PostScriptData) => {
