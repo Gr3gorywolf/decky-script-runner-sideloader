@@ -4,7 +4,7 @@ import { PostScriptData } from '@/Types/PostScriptData';
 import { PutScriptData } from '@/Types/PutScriptData';
 
 export const getScripts = async () => {
-  return getApi().get<ScriptData[]>('/');
+  return getApi().get<ScriptData[]>('/scripts');
 };
 
 export const getScriptContent = async (scriptName: string) => {

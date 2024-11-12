@@ -13,6 +13,7 @@ import {
 } from '@/Components/ui/menubar';
 import { CodeEditorLogs } from './CodeEditorLogs';
 import { useToast } from '@/Hooks/use-toast';
+import { useGetScripts } from '@/Hooks/useGetScripts';
 
 export const CodeEditor = () => {
   const { editingFile } = useContext(EditorContext);
@@ -21,6 +22,7 @@ export const CodeEditor = () => {
   const [logsOpen, setLogsOpen] = useState(false);
   const { toast } = useToast();
   const editor = useRef<any>();
+  const { data: scripts } = useGetScripts(true);
 
   const fetchScriptContent = async () => {
     if (!editingFile) return;
@@ -36,7 +38,8 @@ export const CodeEditor = () => {
     if (!editingFile) return;
     setIsSaving(true);
     try {
-      await putUpdateScript({ ...editingFile, content });
+      const foundScript = scripts?.find(script => script.name === editingFile.name);
+      await putUpdateScript({ ...editingFile, ...foundScript, content });
       toast({
         title: 'File saved',
         duration: 2000,
@@ -50,7 +53,7 @@ export const CodeEditor = () => {
       });
     }
     setIsSaving(false);
-  }, [editingFile, content]);
+  }, [editingFile, content, scripts]);
 
   const handleOpenLogs = () => {
     setLogsOpen(true);
