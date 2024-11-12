@@ -9,15 +9,13 @@ import {
   Terminal,
   MoreVertical,
   Plus,
-  Pencil,
   Delete,
   Download,
 } from 'lucide-react';
-import { FileEditDialog } from './FileEditDialog';
 import { SCRIPTS_QUERY_KEY, useGetScripts } from '@/Hooks/useGetScripts';
 import { useContext, useState } from 'react';
 import { EditorContext } from '@/Contexts/EditorContext';
-import { humanizeFileName, readFile } from '@/Utils/helpers';
+import { getDefaultScriptData, readFile } from '@/Utils/helpers';
 import {
   getScriptContent,
   postCreateScript,
@@ -40,7 +38,6 @@ export const FileList = () => {
   const { isConnected, editingFile, setEditingFile } =
     useContext(EditorContext);
   const { data: scripts } = useGetScripts(isConnected);
-  const [editingScript, setEditingScript] = useState<ScriptData | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const { toast } = useToast();
@@ -67,7 +64,6 @@ export const FileList = () => {
     try {
       const { content, name } = await readFile();
       setIsSubmitting(true);
-      const fileExtension = name.slice(name.lastIndexOf('.')).toLowerCase();
       const foundScript = scripts?.find(script => script.name == name);
       if (foundScript) {
         await putUpdateScript({
@@ -77,10 +73,7 @@ export const FileList = () => {
       } else {
         await postCreateScript({
           name,
-          description: '',
-          content,
-          author: '',
-          language: fileExtension.slice(1),
+          content
         });
       }
       if (foundScript) {
@@ -105,7 +98,6 @@ export const FileList = () => {
     if (!name) return;
     setIsCreating(true);
     try {
-      const fileExtension = name.slice(name.lastIndexOf('.')).toLowerCase();
       const foundScript = scripts?.find(script => script.name == name);
       if (foundScript) {
         console.error('Script already exists');
@@ -113,13 +105,10 @@ export const FileList = () => {
       } else {
         const newScript: PostScriptData = {
           name,
-          description: '',
           content: '',
-          author: '',
-          language: fileExtension.slice(1),
         };
         await postCreateScript(newScript);
-        setEditingFile(newScript);
+        setEditingFile(getDefaultScriptData(name));
       }
       queryClient.refetchQueries(SCRIPTS_QUERY_KEY);
     } catch (err:any) {
@@ -266,13 +255,6 @@ export const FileList = () => {
             ))}
         </div>
       </div>
-      {editingScript && (
-        <FileEditDialog
-          isOpen={true}
-          onClose={() => setEditingScript(null)}
-          selectedScript={editingScript}
-        />
-      )}
     </>
   );
 };

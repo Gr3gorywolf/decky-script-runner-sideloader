@@ -1,3 +1,4 @@
+import { ScriptData } from '@/Types/ScriptData';
 import axios from 'axios';
 
 export const TestDeviceConnection = async (ip: string) => {
@@ -18,6 +19,20 @@ export const humanizeFileName = (fileName: string) => {
   );
   return humanized;
 };
+
+export const getDefaultScriptData = (name:string) =>{
+  const fileExtension = name.slice(name.lastIndexOf('.')).toLowerCase();
+  return {
+    name,
+    author: '',
+    description: '',
+    image: '',
+    language: fileExtension.slice(1),
+    root: false,
+    title:humanizeFileName(name),
+    version: '0.0.0',
+  } as ScriptData
+}
 
 export const readFile = (): Promise<{ content: string; name: string }> => {
   return new Promise((resolve, reject) => {

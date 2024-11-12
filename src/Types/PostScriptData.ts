@@ -1,5 +1,4 @@
-import { ScriptData } from './ScriptData';
-
-export type PostScriptData = ScriptData & {
+export type PostScriptData = {
+  name:string
   content: string;
 };

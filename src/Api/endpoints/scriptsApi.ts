@@ -1,7 +1,6 @@
 import { ScriptData } from '@/Types/ScriptData';
 import { getApi } from '../config/baseApi';
 import { PostScriptData } from '@/Types/PostScriptData';
-import { PutScriptData } from '@/Types/PutScriptData';
 
 export const getScripts = async () => {
   return getApi().get<ScriptData[]>('/scripts');
@@ -19,7 +18,7 @@ export const postCreateScript = async (scriptData: PostScriptData) => {
   return getApi().post<ScriptData>(`/`, scriptData);
 };
 
-export const putUpdateScript = async (scriptData: PutScriptData) => {
+export const putUpdateScript = async (scriptData: PostScriptData) => {
   return getApi().put<ScriptData>(`/`, scriptData);
 };
 
