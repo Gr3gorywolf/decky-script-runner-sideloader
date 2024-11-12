@@ -11,6 +11,7 @@ import {
   Plus,
   Pencil,
   Delete,
+  Download,
 } from 'lucide-react';
 import { FileEditDialog } from './FileEditDialog';
 import { SCRIPTS_QUERY_KEY, useGetScripts } from '@/Hooks/useGetScripts';
@@ -18,6 +19,7 @@ import { useContext, useState } from 'react';
 import { EditorContext } from '@/Contexts/EditorContext';
 import { humanizeFileName, readFile } from '@/Utils/helpers';
 import {
+  getScriptContent,
   postCreateScript,
   postDeleteScript,
   putUpdateScript,
@@ -152,6 +154,28 @@ export const FileList = () => {
     }
   };
 
+  const handleDownload = async (script: ScriptData) => {
+    try{
+      const scriptData = await getScriptContent(script.name);
+
+      const element = document.createElement('a');
+      const file = new Blob([scriptData.data], { type: 'text/plain' });
+      element.href = URL.createObjectURL(file);
+      element.download = script.name;
+      document.body.appendChild(element);
+      element.click();
+    }catch(err:any){
+      toast({
+        title: 'Failed to download the script',
+        description: err?.response?.data?.error,
+        duration: 2000,
+        variant: 'destructive',
+      });
+      console.log(err.response);
+    }
+    
+  }
+
   return (
     <>
       <div className="w-90 bg-gray-900 p-4 flex flex-col">
@@ -188,7 +212,7 @@ export const FileList = () => {
                 <div className="flex items-center">
                   {getFileIcon(script.language)}
                   <div>
-                    <div>{humanizeFileName(script.name)}</div>
+                    <div>{script.title}</div>
                     {script.description && (
                       <div className="text-xs text-gray-400">
                         {script.description}
@@ -220,11 +244,11 @@ export const FileList = () => {
                       <DropdownMenuItem
                         onClick={e => {
                           e.stopPropagation();
-                          setEditingScript(script);
+                          handleDownload(script);
                         }}
                       >
-                        <Pencil />
-                        <span>Edit</span>
+                        <Download />
+                        <span>Download</span>
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={e => {

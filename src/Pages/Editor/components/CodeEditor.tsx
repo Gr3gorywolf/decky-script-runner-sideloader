@@ -13,22 +13,30 @@ import {
 } from '@/Components/ui/menubar';
 import { CodeEditorLogs } from './CodeEditorLogs';
 import { useToast } from '@/Hooks/use-toast';
-import { useGetScripts } from '@/Hooks/useGetScripts';
+import { SCRIPTS_QUERY_KEY, useGetScripts } from '@/Hooks/useGetScripts';
+import { queryClient } from '@/App';
 
 export const CodeEditor = () => {
   const { editingFile } = useContext(EditorContext);
   const [content, setContent] = useState('');
   const [_, setIsSaving] = useState(false);
+  const prevContent = useRef<string | null>(null);
   const [logsOpen, setLogsOpen] = useState(false);
   const { toast } = useToast();
   const editor = useRef<any>();
   const { data: scripts } = useGetScripts(true);
+
+  const extractMetadata = (scriptContent:string) =>{
+      if(!scriptContent.includes("----------metadata---------")) return null;
+      return scriptContent.split("----------metadata---------")[1]?.split("----------metadata---------")[0] ?? null
+  }
 
   const fetchScriptContent = async () => {
     if (!editingFile) return;
     try {
       const data = await getScriptContent(editingFile?.name);
       setContent(data.data);
+      prevContent.current = data.data;
     } catch (error) {
       console.error(error);
     }
@@ -40,6 +48,12 @@ export const CodeEditor = () => {
     try {
       const foundScript = scripts?.find(script => script.name === editingFile.name);
       await putUpdateScript({ ...editingFile, ...foundScript, content });
+      const metadata = extractMetadata(content);
+      const prevMetadata = extractMetadata(prevContent.current ?? '');
+      if(prevContent.current && metadata !== prevMetadata){
+        queryClient.refetchQueries(SCRIPTS_QUERY_KEY);
+        prevContent.current = content;
+      }
       toast({
         title: 'File saved',
         duration: 2000,
