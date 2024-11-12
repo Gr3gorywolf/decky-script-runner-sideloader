@@ -7,9 +7,12 @@ import { EditorContext } from '@/Contexts/EditorContext';
 import { useToast } from '@/Hooks/use-toast';
 
 export const TopBar = () => {
-  const { isConnected, setDeviceIp, setIsConnected, setEditingFile, setFiles } =
+  const { isConnected, setDeviceIp, setIsConnected, setEditingFile } =
     useContext(EditorContext);
   const [connecting, setConnecting] = useState(false);
+  //@ts-ignore
+  //when the sideloader is served from the steam deck, the SERVER_DECK_IP is set in the index.html
+  const [serverIp, setServerIp] = useState<string | null>(window.SERVER_DECK_IP ?? null);
   const { toast } = useToast();
 
   const handleConnect = async (ip: string) => {
@@ -39,13 +42,15 @@ export const TopBar = () => {
       setDeviceIp(undefined);
       setTimeout(() => {
         setEditingFile(null);
-        setFiles([]);
       }, 1000);
     } else {
-      const result = prompt(
-        "Enter your deck's IP address",
-        localStorage.getItem(LAST_IP_KEY) ?? ''
-      );
+      let result = serverIp
+      if(!result){
+        result = prompt(
+          "Enter your deck's IP address",
+          localStorage.getItem(LAST_IP_KEY) ?? ''
+        );
+      }
       if (result) {
         await handleConnect(result);
       }
@@ -55,11 +60,13 @@ export const TopBar = () => {
   useEffect(() => {
     // Check for deckIp in URL query parameters on component mount
     const urlParams = new URLSearchParams(window.location.search);
-    const deckIp = urlParams.get('deckIp');
+    const deckIp = urlParams.get('deckIp') ?? serverIp;
     if (deckIp) {
       handleConnect(deckIp); // Attempt to connect automatically if deckIp is provided in URL
     }
-  }, []); // Empty dependency array to run only on mount
+  }, [serverIp]); // Empty dependency array to run only on mount
+
+ 
 
   return (
     <div className="bg-gray-900 p-2 flex items-center justify-between">
