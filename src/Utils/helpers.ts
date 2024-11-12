@@ -2,7 +2,7 @@ import axios from 'axios';
 
 export const TestDeviceConnection = async (ip: string) => {
   try {
-    await axios.get(`https://${ip}:9696/status`);
+    await axios.get(`http://${ip}:9696/status`);
     return true;
   } catch (error) {
     return false;
