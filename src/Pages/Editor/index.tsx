@@ -6,6 +6,7 @@ import { EditorContext } from '@/Contexts/EditorContext';
 import { TestDeviceConnection } from '@/Utils/helpers';
 import { NoFilePlaceholder } from './components/NoFilePlaceholder';
 import { NotConnectedPlaceholder } from './components/NotConnectedPlaceholder';
+import { useGetScripts } from '@/Hooks/useGetScripts';
 
 function Editor() {
   const {
@@ -17,6 +18,7 @@ function Editor() {
     editingFile,
     isConnected,
   } = useContext(EditorContext);
+  const { refetch: refetchScripts } = useGetScripts(isConnected);
   useEffect(() => {
     let connectedKey: NodeJS.Timeout | null = null;
     if (isConnected && deviceIp) {
@@ -37,6 +39,15 @@ function Editor() {
       }
     };
   }, [deviceIp, isConnected]);
+
+  useEffect(() => {
+    const intKey = setInterval(() => {
+      refetchScripts();
+    }, 10000);
+    return () => {
+      clearInterval(intKey);
+    };
+  }, [isConnected]);
   return (
     <div className="dark flex flex-col h-screen bg-gray-900 text-gray-300 font-mono">
       {/* Top bar */}

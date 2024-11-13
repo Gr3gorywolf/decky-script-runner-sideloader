@@ -15,42 +15,65 @@ import { CodeEditorLogs } from './CodeEditorLogs';
 import { useToast } from '@/Hooks/use-toast';
 import { SCRIPTS_QUERY_KEY, useGetScripts } from '@/Hooks/useGetScripts';
 import { queryClient } from '@/App';
+import { WarningAlert } from '@/Components/ui/warning-alert';
+import { prependScriptComment } from '@/Utils/scripts';
 
 export const CodeEditor = () => {
   const { editingFile } = useContext(EditorContext);
   const [content, setContent] = useState('');
   const [_, setIsSaving] = useState(false);
+  const [showNotCommentAlert, setShowNotCommentAlert] = useState(false);
   const prevContent = useRef<string | null>(null);
   const [logsOpen, setLogsOpen] = useState(false);
   const { toast } = useToast();
   const editor = useRef<any>();
   const { data: scripts } = useGetScripts(true);
 
-  const extractMetadata = (scriptContent:string) =>{
-      if(!scriptContent.includes("----------metadata---------")) return null;
-      return scriptContent.split("----------metadata---------")[1]?.split("----------metadata---------")[0] ?? null
+  const hasMetadata = (scriptContent:string) =>{
+    return  scriptContent.includes("----------metadata---------");
   }
+
+  const extractMetadata = (scriptContent: string) => {
+    if (!hasMetadata(scriptContent)) return null;
+    return (
+      scriptContent
+        .split('----------metadata---------')[1]
+        ?.split('----------metadata---------')[0] ?? null
+    );
+  };
 
   const fetchScriptContent = async () => {
     if (!editingFile) return;
     try {
       const data = await getScriptContent(editingFile?.name);
       setContent(data.data);
+      if(!hasMetadata(data.data)){
+        setShowNotCommentAlert(true);
+      }
       prevContent.current = data.data;
     } catch (error) {
       console.error(error);
     }
   };
+  
+  const handleSetMetadata = useCallback(() => {
+    setContent(prependScriptComment(editingFile?.name ?? '', content));
+    setShowNotCommentAlert(false);
+  },[ editingFile, content]);
 
   const handleSave = useCallback(async () => {
     if (!editingFile) return;
     setIsSaving(true);
     try {
-      const foundScript = scripts?.find(script => script.name === editingFile.name);
+      const foundScript = scripts?.find(
+        script => script.name === editingFile.name
+      );
       await putUpdateScript({ ...editingFile, ...foundScript, content });
-      const metadata = extractMetadata(content);
-      const prevMetadata = extractMetadata(prevContent.current ?? '');
-      if(prevContent.current && metadata !== prevMetadata){
+      const metadata = extractMetadata(content) ?? '';
+      const prevMetadata = extractMetadata(prevContent.current ?? '') ?? '';
+      setShowNotCommentAlert(!hasMetadata(content));
+     
+      if (metadata !== prevMetadata) {
         queryClient.refetchQueries(SCRIPTS_QUERY_KEY);
         prevContent.current = content;
       }
@@ -65,6 +88,7 @@ export const CodeEditor = () => {
         duration: 2000,
         variant: 'destructive',
       });
+      console.error(err);
     }
     setIsSaving(false);
   }, [editingFile, content, scripts]);
@@ -136,6 +160,14 @@ export const CodeEditor = () => {
             </MenubarContent>
           </MenubarMenu>
         </Menubar>
+        {showNotCommentAlert && (
+          <WarningAlert
+            message="No metadata comment detected"
+            actionLabel="Create it"
+            onClose={() => setShowNotCommentAlert(false)}
+            onAction={handleSetMetadata}
+          />
+        )}
         <Editor
           height="calc(100% - 40px)"
           onMount={edi => {

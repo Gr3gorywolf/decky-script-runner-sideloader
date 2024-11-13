@@ -11,7 +11,6 @@ export const useGetScripts = (isConnected: boolean) => {
       return data.data;
     },
     {
-      refetchInterval: 10 * 1000,
       enabled: isConnected,
     }
   );

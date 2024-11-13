@@ -20,14 +20,18 @@ export const humanizeFileName = (fileName: string) => {
   return humanized;
 };
 
+export const getFileExtension = (fileName:string, returnDots = true) =>{
+  const fileExtension = fileName.slice(fileName.lastIndexOf('.')).toLowerCase();
+  return returnDots ? fileExtension : fileExtension.slice(1);
+} 
+
 export const getDefaultScriptData = (name:string) =>{
-  const fileExtension = name.slice(name.lastIndexOf('.')).toLowerCase();
   return {
     name,
     author: '',
     description: '',
     image: '',
-    language: fileExtension.slice(1),
+    language: getFileExtension(name, false),
     root: false,
     title:humanizeFileName(name),
     version: '0.0.0',

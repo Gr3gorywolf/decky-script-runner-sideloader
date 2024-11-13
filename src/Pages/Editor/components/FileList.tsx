@@ -4,7 +4,6 @@ import {
   Upload,
   FileIcon,
   FileCode,
-  FileJson,
   FileText,
   Terminal,
   MoreVertical,
@@ -12,6 +11,7 @@ import {
   Delete,
   Download,
 } from 'lucide-react';
+import {BashOriginal, LuaOriginal, NodejsOriginal, PerlOriginal, PhpOriginal, PythonOriginal, RubyOriginal } from 'devicons-react'
 import { SCRIPTS_QUERY_KEY, useGetScripts } from '@/Hooks/useGetScripts';
 import { useContext, useState } from 'react';
 import { EditorContext } from '@/Contexts/EditorContext';
@@ -33,6 +33,7 @@ import {
   DropdownMenuTrigger,
 } from '@/Components/ui/dropdown-menu';
 import { useToast } from '@/Hooks/use-toast';
+import { generateScriptComment } from '@/Utils/scripts';
 
 export const FileList = () => {
   const { isConnected, editingFile, setEditingFile } =
@@ -42,21 +43,27 @@ export const FileList = () => {
   const [isCreating, setIsCreating] = useState(false);
   const { toast } = useToast();
   const getFileIcon = (language?: string) => {
+    const iconProps  = {
+      className: "mr-2 h-4 w-4",
+      size: 40
+    }
     switch (language) {
       case 'js':
-        return <FileJson className="mr-2 h-4 w-4" />;
+        return <NodejsOriginal {...iconProps} />;
       case 'sh':
-        return <Terminal className="mr-2 h-4 w-4" />;
+        return <BashOriginal {...iconProps} />;
       case 'py':
-        return <FileCode className="mr-2 h-4 w-4" />;
+        return <PythonOriginal {...iconProps} />;
       case 'php':
-        return <FileCode className="mr-2 h-4 w-4" />;
+        return <PhpOriginal {...iconProps} />;
       case 'rb':
-        return <FileCode className="mr-2 h-4 w-4" />;
+        return <RubyOriginal {...iconProps} />;
       case 'lua':
-        return <FileText className="mr-2 h-4 w-4" />;
+        return <LuaOriginal {...iconProps} />;
+      case 'pl':
+        return <PerlOriginal {...iconProps} />;
       default:
-        return <FileIcon className="mr-2 h-4 w-4" />;
+        return <FileIcon {...iconProps} />;
     }
   };
 
@@ -105,7 +112,7 @@ export const FileList = () => {
       } else {
         const newScript: PostScriptData = {
           name,
-          content: '',
+          content: generateScriptComment(name,true),
         };
         await postCreateScript(newScript);
         setEditingFile(getDefaultScriptData(name));
@@ -167,7 +174,7 @@ export const FileList = () => {
 
   return (
     <>
-      <div className="w-90 bg-gray-900 p-4 flex flex-col">
+      <div className="w-90 min-w-80 bg-gray-900 p-4 flex flex-col">
         {isConnected && (
           <div className="flex flex-row gap-2">
             <Button
@@ -198,10 +205,10 @@ export const FileList = () => {
                 }`}
                 onClick={() => setEditingFile(script)}
               >
-                <div className="flex items-center">
-                  {getFileIcon(script.language)}
+                <div className="flex items-center"> 
+                {getFileIcon(script.language)}
                   <div>
-                    <div>{script.title}</div>
+                    <div> {script.title}</div>
                     {script.description && (
                       <div className="text-xs text-gray-400">
                         {script.description}
@@ -209,7 +216,7 @@ export const FileList = () => {
                     )}
                     {script.author && (
                       <div className="text-xs text-gray-500">
-                        {script.author}
+                        {script.name}  v{script.version} by {script.author}
                       </div>
                     )}
                   </div>
