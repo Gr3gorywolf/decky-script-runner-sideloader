@@ -3,9 +3,6 @@ import { Button } from '@/Components/ui/button';
 import {
   Upload,
   FileIcon,
-  FileCode,
-  FileText,
-  Terminal,
   MoreVertical,
   Plus,
   Delete,

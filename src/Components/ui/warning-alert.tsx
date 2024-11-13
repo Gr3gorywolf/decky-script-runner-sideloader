@@ -1,6 +1,6 @@
 import { AlertTriangle, X } from "lucide-react"
 import { Button } from "./button"
-import { FC, useState } from "react"
+import { FC } from "react"
 
 
 interface props{
