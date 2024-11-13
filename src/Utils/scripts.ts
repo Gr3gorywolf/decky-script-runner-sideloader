@@ -13,7 +13,7 @@ root: false
 ----------metadata---------
 `;
     const comments = {
-        sh: isCreating? `#!/bin/bash\n:'${content}'` : `:'${content}'`,
+        sh: isCreating? `#!/bin/bash\n: '${content}'` : `: '${content}'`,
         pl: `=pod${content}=cut`,
         py: `"""${content}"""`,
         js: `/*${content}*/`,
