@@ -22,6 +22,7 @@
     "@types/node": "^22.9.0",
     "@types/react": "^18.0.37",
     "@types/react-dom": "^18.0.11",
+    "ansi-to-react": "^6.1.6",
     "axios": "^1.7.7",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",

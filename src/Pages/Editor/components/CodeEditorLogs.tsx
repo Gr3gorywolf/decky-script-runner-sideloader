@@ -7,6 +7,7 @@ import {
 } from '@/Components/ui/sheet';
 import { ScriptData } from '@/Types/ScriptData';
 import { FC, useEffect, useRef, useState } from 'react';
+import Ansi from "ansi-to-react";
 
 interface props {
   script: ScriptData;
@@ -65,7 +66,7 @@ export const CodeEditorLogs: FC<props> = ({ onClose, script }) => {
           {consoleOutput.map((line, index) => (
             <div key={index} className="m-0 py-1 flex">
               <span className="mr-2 text-green-400">{`/>`}</span>
-              <span className="text-gray-50">{line}</span>
+              <span className="text-gray-50"><Ansi>{line}</Ansi></span>
             </div>
           ))}
         </div>
