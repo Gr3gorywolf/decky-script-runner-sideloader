@@ -5,8 +5,8 @@ import {
   FileIcon,
   MoreVertical,
   Plus,
-  Delete,
   Download,
+  Trash,
 } from 'lucide-react';
 import {BashOriginal, LuaOriginal, NodejsOriginal, PerlOriginal, PhpOriginal, PythonOriginal, RubyOriginal } from 'devicons-react'
 import { SCRIPTS_QUERY_KEY, useGetScripts } from '@/Hooks/useGetScripts';
@@ -33,7 +33,7 @@ import { useToast } from '@/Hooks/use-toast';
 import { generateScriptComment } from '@/Utils/scripts';
 
 export const FileList = () => {
-  const { isConnected, editingFile, setEditingFile } =
+  const { isConnected, editingFile, setEditingFile, editingFileHasChanges } =
     useContext(EditorContext);
   const { data: scripts } = useGetScripts(isConnected);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -64,6 +64,13 @@ export const FileList = () => {
     }
   };
 
+  const handleSetEditingFile = (script:ScriptData | null) =>{
+      if(editingFileHasChanges){
+        if(!confirm('You have unsaved changes, are you sure you want to discard them?')) return;
+      }
+      setEditingFile(script);
+  }
+
   const handleFileUpload = async () => {
     try {
       const { content, name } = await readFile();
@@ -81,7 +88,7 @@ export const FileList = () => {
         });
       }
       if (foundScript) {
-        setEditingFile(foundScript);
+        handleSetEditingFile(foundScript);
       }
       queryClient.refetchQueries(SCRIPTS_QUERY_KEY);
     } catch (err:any) {
@@ -112,7 +119,7 @@ export const FileList = () => {
           content: generateScriptComment(name,true),
         };
         await postCreateScript(newScript);
-        setEditingFile(getDefaultScriptData(name));
+        handleSetEditingFile(getDefaultScriptData(name));
       }
       queryClient.refetchQueries(SCRIPTS_QUERY_KEY);
     } catch (err:any) {
@@ -133,7 +140,7 @@ export const FileList = () => {
     try {
       await postDeleteScript(script.name);
       if (script.name === editingFile?.name) {
-        setEditingFile(null);
+        handleSetEditingFile(null);
       }
       queryClient.refetchQueries(SCRIPTS_QUERY_KEY);
     } catch (err:any) {
@@ -200,7 +207,7 @@ export const FileList = () => {
                 className={`flex items-center justify-between p-2 cursor-pointer hover:bg-gray-800 rounded ${
                   editingFile?.name === script.name ? 'bg-gray-800' : ''
                 }`}
-                onClick={() => setEditingFile(script)}
+                onClick={() => handleSetEditingFile(script)}
               >
                 <div className="flex items-center"> 
                 {getFileIcon(script.language)}
@@ -249,7 +256,7 @@ export const FileList = () => {
                           handleDelete(script);
                         }}
                       >
-                        <Delete />
+                        <Trash />
                         <span>Delete</span>
                       </DropdownMenuItem>
                     </DropdownMenuGroup>

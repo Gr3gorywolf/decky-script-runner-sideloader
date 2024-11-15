@@ -10,6 +10,8 @@ interface EditorContextType {
   setIsConnected: React.Dispatch<React.SetStateAction<boolean>>;
   deviceIp?: string;
   setDeviceIp: React.Dispatch<React.SetStateAction<string | undefined>>;
+  editingFileHasChanges: boolean;
+  setEditingFileHasChanges: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 // Create the context with an initial value (use `undefined` as the default value)
@@ -22,6 +24,8 @@ export const EditorContext = createContext<EditorContextType>({
   setFiles: () => null,
   setIsConnected: () => null,
   deviceIp: undefined,
+  editingFileHasChanges: false,
+  setEditingFileHasChanges: () => null,
 });
 
 // Create a provider component
@@ -37,6 +41,7 @@ export const EditorContextProvider: React.FC<EditorProviderProps> = ({
   const [editingFile, setEditingFile] = useState<ScriptData | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [deviceIp, setDeviceIp] = useState<string | undefined>();
+  const [editingFileHasChanges, setEditingFileHasChanges] = useState(false);
 
   return (
     <EditorContext.Provider
@@ -49,6 +54,7 @@ export const EditorContextProvider: React.FC<EditorProviderProps> = ({
         setIsConnected,
         deviceIp,
         setDeviceIp,
+        editingFileHasChanges, setEditingFileHasChanges
       }}
     >
       {children}

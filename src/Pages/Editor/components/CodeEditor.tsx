@@ -23,9 +23,12 @@ import {
   ResizableHandle,
 } from '@/Components/ui/resizable';
 import classNames from 'classnames';
+import { Save } from 'lucide-react';
+import { Badge } from '@/Components/ui/badge';
 
 export const CodeEditor = () => {
-  const { editingFile } = useContext(EditorContext);
+  const { editingFile, editingFileHasChanges, setEditingFileHasChanges } =
+    useContext(EditorContext);
   const [content, setContent] = useState('');
   const [_, setIsSaving] = useState(false);
   const [showNotCommentAlert, setShowNotCommentAlert] = useState(false);
@@ -33,6 +36,7 @@ export const CodeEditor = () => {
   const [logsOpen, setLogsOpen] = useState(false);
   const { toast } = useToast();
   const editor = useRef<any>();
+  const monaco = useRef<any>();
   const { data: scripts } = useGetScripts(true);
 
   const hasMetadata = (scriptContent: string) => {
@@ -48,15 +52,36 @@ export const CodeEditor = () => {
     );
   };
 
+  function clearUndoRedoHistory() {
+    if (!editor.current || !monaco.current) return;
+
+    // Get the current content and language
+    const currentValue = editor.current.getValue();
+    const currentLanguage = editor.current.getModel().getLanguageId();
+
+    // Dispose of the current model to clean up resources
+    editor.current.getModel().dispose();
+
+    // Create a new model with the same content and language
+    const newModel = monaco.current.editor.createModel(currentValue, currentLanguage);
+
+    // Assign the new model to the editor
+    editor.current.setModel(newModel);
+  }
+
   const fetchScriptContent = async () => {
     if (!editingFile) return;
     try {
       const data = await getScriptContent(editingFile?.name);
-      setContent(data.data);
+      
       if (!hasMetadata(data.data)) {
         setShowNotCommentAlert(true);
       }
       prevContent.current = data.data;
+      handleContentChange(data.data);
+      setTimeout(() => {
+        clearUndoRedoHistory();
+      }, 100);
     } catch (error) {
       console.error(error);
     }
@@ -78,6 +103,7 @@ export const CodeEditor = () => {
       const metadata = extractMetadata(content) ?? '';
       const prevMetadata = extractMetadata(prevContent.current ?? '') ?? '';
       setShowNotCommentAlert(!hasMetadata(content));
+      setEditingFileHasChanges(false);
 
       if (metadata !== prevMetadata) {
         queryClient.refetchQueries(SCRIPTS_QUERY_KEY);
@@ -99,8 +125,17 @@ export const CodeEditor = () => {
     setIsSaving(false);
   }, [editingFile, content, scripts]);
 
+  const handleContentChange = (newContent: string) => {
+    const normalizeContent = (content: string) => content.replace('\r\n', '\n').replace('\r', '').trim();
+    const normalizedNewContent = normalizeContent(newContent);
+    const normalizedPrevContent = normalizeContent(prevContent.current ?? '');
+    const isModified = normalizedNewContent !== normalizedPrevContent;
+    setEditingFileHasChanges(isModified);
+    setContent(newContent);
+  };
+
   const handleOpenLogs = () => {
-    setLogsOpen(true);
+    setLogsOpen(!logsOpen);
   };
 
   useEffect(() => {
@@ -131,12 +166,9 @@ export const CodeEditor = () => {
       <div className="h-full">
         <Menubar className="w-full bg-gray-800 rounded-none dark">
           <MenubarMenu>
-            <MenubarTrigger>File</MenubarTrigger>
-            <MenubarContent className="dark">
-              <MenubarItem onClick={handleSave}>
-                Save <MenubarShortcut>⌘S</MenubarShortcut>
-              </MenubarItem>
-            </MenubarContent>
+            <MenubarTrigger onClick={handleSave} className="cursor-pointer">
+              <Save size={14} className="mr-1" /> Save
+            </MenubarTrigger>
           </MenubarMenu>
           <MenubarMenu>
             <MenubarTrigger>Edit</MenubarTrigger>
@@ -158,14 +190,22 @@ export const CodeEditor = () => {
             </MenubarContent>
           </MenubarMenu>
           <MenubarMenu>
-            <MenubarTrigger>Debug</MenubarTrigger>
-            <MenubarContent className="dark">
-              <MenubarItem onClick={handleOpenLogs}>
-                Open logs <MenubarShortcut>⌘L</MenubarShortcut>
-              </MenubarItem>
-            </MenubarContent>
+            <MenubarTrigger onClick={handleOpenLogs} className="cursor-pointer">
+              {' '}
+              Open logs
+            </MenubarTrigger>
           </MenubarMenu>
         </Menubar>
+        <div className="bg-gray-800 border-t border-t-gray-700 w-full px-4 py-1 ">
+          <h5>
+            {editingFile?.name}{' '}
+            {editingFileHasChanges && (
+              <Badge variant="default" className="ml-3">
+                Modified
+              </Badge>
+            )}
+          </h5>
+        </div>
         {showNotCommentAlert && (
           <WarningAlert
             message="No metadata comment detected"
@@ -188,14 +228,16 @@ export const CodeEditor = () => {
             {/* File list sidebar */}
             <Editor
               className="h-full"
-              onMount={edi => {
+              onMount={(edi, monac) => {
                 editor.current = edi;
+                monaco.current = monac;
               }}
+              keepCurrentModel={true}
               defaultLanguage={getMonacoLanguage(editingFile?.language ?? '')}
               theme="vs-dark"
               language={getMonacoLanguage(editingFile?.language ?? '')}
               value={content}
-              onChange={value => setContent(value ?? '')}
+              onChange={value => handleContentChange(value ?? '')}
               options={{
                 minimap: { enabled: false },
                 fontSize: 14,
