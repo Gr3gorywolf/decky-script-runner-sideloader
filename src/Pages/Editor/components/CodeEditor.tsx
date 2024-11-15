@@ -22,7 +22,6 @@ import {
   ResizablePanel,
   ResizableHandle,
 } from '@/Components/ui/resizable';
-import { NoFilePlaceholder } from './NoFilePlaceholder';
 import classNames from 'classnames';
 
 export const CodeEditor = () => {

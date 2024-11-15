@@ -5,7 +5,6 @@ import { useContext, useState, useEffect, FC } from 'react';
 import { TestDeviceConnection } from '@/Utils/helpers';
 import { EditorContext } from '@/Contexts/EditorContext';
 import { useToast } from '@/Hooks/use-toast';
-import { useMediaQuery } from 'react-responsive';
 import { useScreenSize } from '@/Hooks/useScreenSize';
 
 interface props {
