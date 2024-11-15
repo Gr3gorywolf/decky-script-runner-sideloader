@@ -1,18 +1,25 @@
-import { Wifi, WifiOff } from 'lucide-react';
+import { LucideSidebar, Wifi, WifiOff } from 'lucide-react';
 import { Button } from '@/Components/ui/button';
 import { LAST_IP_KEY } from '@/Utils/constants';
-import { useContext, useState, useEffect } from 'react';
+import { useContext, useState, useEffect, FC } from 'react';
 import { TestDeviceConnection } from '@/Utils/helpers';
 import { EditorContext } from '@/Contexts/EditorContext';
 import { useToast } from '@/Hooks/use-toast';
+import { useMediaQuery } from 'react-responsive';
+import { useScreenSize } from '@/Hooks/useScreenSize';
 
-export const TopBar = () => {
+interface props {
+  onSidebarTrigger: () => void;
+}
+
+export const TopBar: FC<props> = ({ onSidebarTrigger }) => {
+  const { isDesktopOrLaptop } = useScreenSize();
   const { isConnected, setDeviceIp, setIsConnected, setEditingFile } =
     useContext(EditorContext);
   const [connecting, setConnecting] = useState(false);
-  //@ts-ignore
-  //when the sideloader is served from the steam deck, the SERVER_DECK_IP is set in the index.html
-  const [serverIp, setServerIp] = useState<string | null>(window.SERVER_DECK_IP ?? null);
+   //when the sideloader is served from the steam deck, the SERVER_DECK_IP is set in the index.html
+    //@ts-ignore
+  const serverIp =  window.SERVER_DECK_IP ?? null
   const { toast } = useToast();
 
   const handleConnect = async (ip: string) => {
@@ -44,8 +51,8 @@ export const TopBar = () => {
         setEditingFile(null);
       }, 1000);
     } else {
-      let result = serverIp
-      if(!result){
+      let result = serverIp;
+      if (!result) {
         result = prompt(
           "Enter your deck's IP address",
           localStorage.getItem(LAST_IP_KEY) ?? ''
@@ -66,11 +73,18 @@ export const TopBar = () => {
     }
   }, [serverIp]); // Empty dependency array to run only on mount
 
- 
-
   return (
     <div className="bg-gray-900 p-2 flex items-center justify-between">
       <div className="flex items-center">
+        {!isDesktopOrLaptop && isConnected && (
+          <div className='p-1 hover:bg-gray-800 rounded-md mr-4 ml-2'>
+          <LucideSidebar
+          size={18}
+            onClick={onSidebarTrigger}
+            className="cursor-pointer   "
+          />
+          </div>
+        )}
         {isConnected ? (
           <Wifi className="h-5 w-5 text-green-500 mr-2" />
         ) : (

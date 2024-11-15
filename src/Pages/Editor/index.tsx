@@ -1,12 +1,19 @@
 import { CodeEditor } from './components/CodeEditor';
 import { TopBar } from './components/TopBar';
 import { FileList } from './components/FileList';
-import { useContext, useEffect } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { EditorContext } from '@/Contexts/EditorContext';
 import { TestDeviceConnection } from '@/Utils/helpers';
 import { NoFilePlaceholder } from './components/NoFilePlaceholder';
 import { NotConnectedPlaceholder } from './components/NotConnectedPlaceholder';
 import { useGetScripts } from '@/Hooks/useGetScripts';
+import classnames from 'classnames';
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from '@/Components/ui/resizable';
+import { useScreenSize } from '@/Hooks/useScreenSize';
 
 function Editor() {
   const {
@@ -19,6 +26,10 @@ function Editor() {
     isConnected,
   } = useContext(EditorContext);
   const { refetch: refetchScripts } = useGetScripts(isConnected);
+  const [sidebarVisible, setSidebarVisible] = useState(true);
+
+  const { isDesktopOrLaptop } = useScreenSize();
+
   useEffect(() => {
     let connectedKey: NodeJS.Timeout | null = null;
     if (isConnected && deviceIp) {
@@ -40,6 +51,16 @@ function Editor() {
     };
   }, [deviceIp, isConnected]);
 
+
+  useEffect(()=>{
+    if(!isDesktopOrLaptop){
+      setSidebarVisible(!editingFile);
+    }
+   
+  },[editingFile, isDesktopOrLaptop])
+
+
+
   useEffect(() => {
     const intKey = setInterval(() => {
       refetchScripts();
@@ -51,16 +72,29 @@ function Editor() {
   return (
     <div className="dark flex flex-col h-screen bg-gray-900 text-gray-300 font-mono">
       {/* Top bar */}
-      <TopBar />
+      <TopBar onSidebarTrigger={()=>setSidebarVisible(!sidebarVisible)} />
 
       {isConnected ? (
-        <div className="flex flex-1 overflow-hidden">
-          {/* File list sidebar */}
-          <FileList />
-
-          {/* Code editor */}
-          {editingFile ? <CodeEditor /> : <NoFilePlaceholder />}
-        </div>
+        <ResizablePanelGroup direction="horizontal">
+          <ResizablePanel
+            defaultSize={20}
+            className={classnames({
+              'w-0': !sidebarVisible,
+              'max-w-0': !sidebarVisible,
+              'min-w-80': sidebarVisible || isDesktopOrLaptop,
+            })}
+          >
+            {/* File list sidebar */}
+            <FileList />
+          </ResizablePanel>
+          <ResizableHandle />
+          <ResizablePanel defaultSize={75} className="h-full">
+            {/* Code editor */}
+            <div className="d-flex h-full">
+              {editingFile ? <CodeEditor /> : <NoFilePlaceholder />}
+            </div>
+          </ResizablePanel>
+        </ResizablePanelGroup>
       ) : (
         <NotConnectedPlaceholder />
       )}

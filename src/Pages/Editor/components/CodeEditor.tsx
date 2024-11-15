@@ -17,6 +17,13 @@ import { SCRIPTS_QUERY_KEY, useGetScripts } from '@/Hooks/useGetScripts';
 import { queryClient } from '@/App';
 import { WarningAlert } from '@/Components/ui/warning-alert';
 import { prependScriptComment } from '@/Utils/scripts';
+import {
+  ResizablePanelGroup,
+  ResizablePanel,
+  ResizableHandle,
+} from '@/Components/ui/resizable';
+import { NoFilePlaceholder } from './NoFilePlaceholder';
+import classNames from 'classnames';
 
 export const CodeEditor = () => {
   const { editingFile } = useContext(EditorContext);
@@ -29,9 +36,9 @@ export const CodeEditor = () => {
   const editor = useRef<any>();
   const { data: scripts } = useGetScripts(true);
 
-  const hasMetadata = (scriptContent:string) =>{
-    return  scriptContent.includes("----------metadata---------");
-  }
+  const hasMetadata = (scriptContent: string) => {
+    return scriptContent.includes('----------metadata---------');
+  };
 
   const extractMetadata = (scriptContent: string) => {
     if (!hasMetadata(scriptContent)) return null;
@@ -47,7 +54,7 @@ export const CodeEditor = () => {
     try {
       const data = await getScriptContent(editingFile?.name);
       setContent(data.data);
-      if(!hasMetadata(data.data)){
+      if (!hasMetadata(data.data)) {
         setShowNotCommentAlert(true);
       }
       prevContent.current = data.data;
@@ -55,11 +62,11 @@ export const CodeEditor = () => {
       console.error(error);
     }
   };
-  
+
   const handleSetMetadata = useCallback(() => {
     setContent(prependScriptComment(editingFile?.name ?? '', content));
     setShowNotCommentAlert(false);
-  },[ editingFile, content]);
+  }, [editingFile, content]);
 
   const handleSave = useCallback(async () => {
     if (!editingFile) return;
@@ -72,7 +79,7 @@ export const CodeEditor = () => {
       const metadata = extractMetadata(content) ?? '';
       const prevMetadata = extractMetadata(prevContent.current ?? '') ?? '';
       setShowNotCommentAlert(!hasMetadata(content));
-     
+
       if (metadata !== prevMetadata) {
         queryClient.refetchQueries(SCRIPTS_QUERY_KEY);
         prevContent.current = content;
@@ -122,7 +129,7 @@ export const CodeEditor = () => {
 
   return (
     <>
-      <div className="flex-grow">
+      <div className="h-full">
         <Menubar className="w-full bg-gray-800 rounded-none dark">
           <MenubarMenu>
             <MenubarTrigger>File</MenubarTrigger>
@@ -168,36 +175,53 @@ export const CodeEditor = () => {
             onAction={handleSetMetadata}
           />
         )}
-        <Editor
-          height="calc(100% - 40px)"
-          onMount={edi => {
-            editor.current = edi;
-          }}
-          defaultLanguage={getMonacoLanguage(editingFile?.language ?? '')}
-          theme="vs-dark"
-          language={getMonacoLanguage(editingFile?.language ?? '')}
-          value={content}
-          onChange={value => setContent(value ?? '')}
-          options={{
-            minimap: { enabled: false },
-            fontSize: 14,
-            lineNumbers: 'on',
-            roundedSelection: false,
-            formatOnPaste: true,
-            scrollBeyondLastLine: false,
-            readOnly: false,
-            cursorStyle: 'line',
-          }}
-        />
+
+        <ResizablePanelGroup
+          direction="vertical"
+          style={{ height: 'calc(100% - 40px)' }}
+        >
+          <ResizablePanel
+            defaultSize={70}
+            className={classNames({
+              'min-h-full': !logsOpen,
+            })}
+          >
+            {/* File list sidebar */}
+            <Editor
+              className="h-full"
+              onMount={edi => {
+                editor.current = edi;
+              }}
+              defaultLanguage={getMonacoLanguage(editingFile?.language ?? '')}
+              theme="vs-dark"
+              language={getMonacoLanguage(editingFile?.language ?? '')}
+              value={content}
+              onChange={value => setContent(value ?? '')}
+              options={{
+                minimap: { enabled: false },
+                fontSize: 14,
+                lineNumbers: 'on',
+                roundedSelection: false,
+                formatOnPaste: true,
+                scrollBeyondLastLine: false,
+                readOnly: false,
+                cursorStyle: 'line',
+              }}
+            />
+          </ResizablePanel>
+          <ResizableHandle />
+          {editingFile && logsOpen && (
+            <ResizablePanel defaultSize={30} className="min-h-64">
+              <CodeEditorLogs
+                script={editingFile}
+                onClose={() => {
+                  setLogsOpen(false);
+                }}
+              />
+            </ResizablePanel>
+          )}
+        </ResizablePanelGroup>
       </div>
-      {editingFile && logsOpen && (
-        <CodeEditorLogs
-          script={editingFile}
-          onClose={() => {
-            setLogsOpen(false);
-          }}
-        />
-      )}
     </>
   );
 };

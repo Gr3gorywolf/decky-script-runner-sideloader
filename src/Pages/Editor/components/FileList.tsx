@@ -12,7 +12,7 @@ import {BashOriginal, LuaOriginal, NodejsOriginal, PerlOriginal, PhpOriginal, Py
 import { SCRIPTS_QUERY_KEY, useGetScripts } from '@/Hooks/useGetScripts';
 import { useContext, useState } from 'react';
 import { EditorContext } from '@/Contexts/EditorContext';
-import { getDefaultScriptData, readFile } from '@/Utils/helpers';
+import { getDefaultScriptData, readFile, truncateString } from '@/Utils/helpers';
 import {
   getScriptContent,
   postCreateScript,
@@ -41,8 +41,8 @@ export const FileList = () => {
   const { toast } = useToast();
   const getFileIcon = (language?: string) => {
     const iconProps  = {
-      className: "mr-2 h-4 w-4",
-      size: 40
+      className: "mr-2 ",
+      size: 40,
     }
     switch (language) {
       case 'js':
@@ -171,7 +171,7 @@ export const FileList = () => {
 
   return (
     <>
-      <div className="w-90 min-w-80 bg-gray-900 p-4 flex flex-col">
+      <div className="w-90 min-w-80 bg-gray-900 p-4 flex flex-col h-full">
         {isConnected && (
           <div className="flex flex-row gap-2">
             <Button
@@ -191,7 +191,7 @@ export const FileList = () => {
             </Button>
           </div>
         )}
-        <div className="overflow-y-auto flex-grow">
+        <div className="overflow-y-auto  flex-grow">
           {scripts &&
             isConnected &&
             scripts.map((script, index) => (
@@ -205,15 +205,15 @@ export const FileList = () => {
                 <div className="flex items-center"> 
                 {getFileIcon(script.language)}
                   <div>
-                    <div> {script.title}</div>
+                    <div className='text-xs font-bold'> {truncateString(script.title,120)}</div>
                     {script.description && (
                       <div className="text-xs text-gray-400">
-                        {script.description}
+                        {truncateString(script.description,200)}
                       </div>
                     )}
                     {script.author && (
                       <div className="text-xs text-gray-500">
-                        {script.name}  v{script.version} by {script.author}
+                        {truncateString(script.name,60)}  v{script.version} by {script.author}
                       </div>
                     )}
                   </div>
