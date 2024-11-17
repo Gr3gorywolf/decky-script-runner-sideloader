@@ -7,16 +7,31 @@ import {
   Plus,
   Download,
   Trash,
+  Store,
+  Pencil,
 } from 'lucide-react';
-import {BashOriginal, LuaOriginal, NodejsOriginal, PerlOriginal, PhpOriginal, PythonOriginal, RubyOriginal } from 'devicons-react'
+import {
+  BashOriginal,
+  LuaOriginal,
+  NodejsOriginal,
+  PerlOriginal,
+  PhpOriginal,
+  PythonOriginal,
+  RubyOriginal,
+} from 'devicons-react';
 import { SCRIPTS_QUERY_KEY, useGetScripts } from '@/Hooks/useGetScripts';
 import { useContext, useState } from 'react';
 import { EditorContext } from '@/Contexts/EditorContext';
-import { getDefaultScriptData, readFile, truncateString } from '@/Utils/helpers';
+import {
+  getDefaultScriptData,
+  readFile,
+  truncateString,
+} from '@/Utils/helpers';
 import {
   getScriptContent,
   postCreateScript,
   postDeleteScript,
+  postRenameScript,
   putUpdateScript,
 } from '@/Api/endpoints/scriptsApi';
 import { queryClient } from '@/App';
@@ -40,10 +55,10 @@ export const FileList = () => {
   const [isCreating, setIsCreating] = useState(false);
   const { toast } = useToast();
   const getFileIcon = (language?: string) => {
-    const iconProps  = {
-      className: "mr-2 ",
+    const iconProps = {
+      className: 'mr-2 ',
       size: 40,
-    }
+    };
     switch (language) {
       case 'js':
         return <NodejsOriginal {...iconProps} />;
@@ -64,12 +79,17 @@ export const FileList = () => {
     }
   };
 
-  const handleSetEditingFile = (script:ScriptData | null) =>{
-      if(editingFileHasChanges){
-        if(!confirm('You have unsaved changes, are you sure you want to discard them?')) return;
-      }
-      setEditingFile(script);
-  }
+  const handleSetEditingFile = (script: ScriptData | null) => {
+    if (editingFileHasChanges) {
+      if (
+        !confirm(
+          'You have unsaved changes, are you sure you want to discard them?'
+        )
+      )
+        return;
+    }
+    setEditingFile(script);
+  };
 
   const handleFileUpload = async () => {
     try {
@@ -84,14 +104,14 @@ export const FileList = () => {
       } else {
         await postCreateScript({
           name,
-          content
+          content,
         });
       }
       if (foundScript) {
         handleSetEditingFile(foundScript);
       }
       queryClient.refetchQueries(SCRIPTS_QUERY_KEY);
-    } catch (err:any) {
+    } catch (err: any) {
       toast({
         title: 'Failed to upload the script',
         description: err?.response?.data?.error,
@@ -112,17 +132,24 @@ export const FileList = () => {
       const foundScript = scripts?.find(script => script.name == name);
       if (foundScript) {
         console.error('Script already exists');
+        toast({
+          title: 'Failed to create the script',
+          description: 'A script with this name already exists',
+          duration: 2000,
+          variant: 'destructive',
+        });
+        setIsCreating(false);
         return;
       } else {
         const newScript: PostScriptData = {
           name,
-          content: generateScriptComment(name,true),
+          content: generateScriptComment(name, true),
         };
         await postCreateScript(newScript);
         handleSetEditingFile(getDefaultScriptData(name));
       }
       queryClient.refetchQueries(SCRIPTS_QUERY_KEY);
-    } catch (err:any) {
+    } catch (err: any) {
       console.log(err);
       toast({
         title: 'Failed to create the script',
@@ -143,7 +170,7 @@ export const FileList = () => {
         handleSetEditingFile(null);
       }
       queryClient.refetchQueries(SCRIPTS_QUERY_KEY);
-    } catch (err:any) {
+    } catch (err: any) {
       toast({
         title: 'Failed to delete the script',
         description: err?.response?.data?.error,
@@ -154,8 +181,32 @@ export const FileList = () => {
     }
   };
 
+  const handleRename = async (script: ScriptData) => {
+    const name = prompt('Enter the new name of the script', script.name);
+    if (!name) return;
+    try {
+      await postRenameScript({
+        name: script.name,
+        new_name: name,
+        content: '',
+      });
+      queryClient.refetchQueries(SCRIPTS_QUERY_KEY);
+      if(editingFile?.name === script.name) {
+        handleSetEditingFile(getDefaultScriptData(name));
+      }
+    } catch (err: any) {
+      toast({
+        title: 'Failed to rename the script',
+        description: err?.response?.data?.error,
+        duration: 2000,
+        variant: 'destructive',
+      });
+      console.log(err.response);
+    }
+  };
+
   const handleDownload = async (script: ScriptData) => {
-    try{
+    try {
       const scriptData = await getScriptContent(script.name);
 
       const element = document.createElement('a');
@@ -164,7 +215,7 @@ export const FileList = () => {
       element.download = script.name;
       document.body.appendChild(element);
       element.click();
-    }catch(err:any){
+    } catch (err: any) {
       toast({
         title: 'Failed to download the script',
         description: err?.response?.data?.error,
@@ -173,8 +224,7 @@ export const FileList = () => {
       });
       console.log(err.response);
     }
-    
-  }
+  };
 
   return (
     <>
@@ -209,20 +259,34 @@ export const FileList = () => {
                 }`}
                 onClick={() => handleSetEditingFile(script)}
               >
-                <div className="flex items-center"> 
-                {getFileIcon(script.language)}
+                <div className="flex items-center">
+                  {getFileIcon(script.language)}
                   <div>
-                    <div className='text-xs font-bold'> {truncateString(script.title,120)}</div>
+                    <div className="text-xs font-bold">
+                      {' '}
+                      {truncateString(script.title, 120)}
+                    </div>
                     {script.description && (
                       <div className="text-xs text-gray-400">
-                        {truncateString(script.description,200)}
+                        {truncateString(script.description, 200)}
                       </div>
                     )}
-                    {script.author && (
+                    {(script.author || script.version) && (
                       <div className="text-xs text-gray-500">
-                        {truncateString(script.name,60)}  v{script.version} by {script.author}
+                        {script['is-downloaded'] && (
+                          <span className="text-green-600">
+                            [<Store className="inline-flex" size={14} />]
+                          </span>
+                        )}
+                        {script.root && (
+                          <span className="text-red-600">[ROOT]</span>
+                        )}{' '}
+                        v{script.version} by {script.author}
                       </div>
                     )}
+                    <div className="text-xs text-gray-500 mt-0">
+                      {truncateString(script.name, 60)}
+                    </div>
                   </div>
                 </div>
 
@@ -250,6 +314,17 @@ export const FileList = () => {
                         <Download />
                         <span>Download</span>
                       </DropdownMenuItem>
+                      {!script['is-downloaded'] && (
+                        <DropdownMenuItem
+                          onClick={e => {
+                            e.stopPropagation();
+                            handleRename(script);
+                          }}
+                        >
+                          <Pencil />
+                          <span>Rename</span>
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuItem
                         onClick={e => {
                           e.stopPropagation();

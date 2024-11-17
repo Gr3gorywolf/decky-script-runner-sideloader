@@ -18,6 +18,10 @@ export const postCreateScript = async (scriptData: PostScriptData) => {
   return getApi().post<ScriptData>(`/`, scriptData);
 };
 
+export const postRenameScript = async (scriptData: PostScriptData & {new_name:string}) => {
+  return getApi().post<ScriptData>(`/rename`, scriptData);
+};
+
 export const putUpdateScript = async (scriptData: PostScriptData) => {
   return getApi().put<ScriptData>(`/`, scriptData);
 };
